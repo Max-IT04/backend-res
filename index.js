@@ -1,43 +1,48 @@
-const yargs = require("yargs/yargs");
-const { hideBin } = require("yargs/helpers");
-const pkg = require("./package.json");
-const { addNote, printNotes, removeNote } = require("./notes-controller");
+const express = require("express");
+const chalk = require("chalk");
+const path = require('path');
+const { addNote, getNotes, removeNote } = require("./notes-controller");
 
-yargs(hideBin(process.argv))
-  .version(pkg.version)
-  .command({
-    command: "add",
-    describe: "Add new note list",
-    builder: {
-      title: {
-        type: "string",
-        describe: "Note title",
-        demandOption: true,
-      },
-    },
-    handler(argv) {
-      addNote(argv.title);
-    },
-  })
-  .command({
-    command: "list",
-    describe: "Print all notes",
-    handler() {
-      printNotes();
-    },
-  })
-  .command({
-    command: "remove",
-    describe: "Remove note by id",
-    builder: {
-      id: {
-        type: "string",
-        describe: "Note uniq id",
-        demandOption: true,
-      },
-    },
-    handler(argv) {
-      removeNote(argv.id);
-    },
-  })
-  .parse();
+const port = 3000;
+const app = express();
+
+app.set("view engine", "ejs");
+app.set("views", "pages");
+
+app.use(express.static(path.resolve(__dirname, 'public')));
+app.use(express.urlencoded({ 
+  extended: true 
+}));
+
+// Главная страница
+app.get("/", async (req, res) => {
+  res.render("index", {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: false
+  });
+});
+
+// Обработка формы (создание заметки)
+app.post("/", async (req, res) => {
+  await addNote(req.body.title);
+  res.render("index", {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: true 
+  });
+});
+
+app.delete('/:id', async (req, res) => {
+  await removeNote(req.params.id)
+  res.render("index", {
+    title: 'Express App',
+    notes: await getNotes(),
+    created: false 
+  });
+})
+
+// Запуск сервера
+app.listen(port, () => {
+  console.log(chalk.green(`Server started on port ${port}`));
+});
