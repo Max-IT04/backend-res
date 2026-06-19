@@ -44,8 +44,25 @@ async function removeNote(id) {
   console.log(chalk.green(`Note with id="${id}" has been removed successful`));
 }
 
+async function updateNote(id, newTitle) {
+  const notes = await getNotes();
+  
+  const noteIndex = notes.findIndex(note => note.id === id);
+  
+  if (noteIndex === -1) {
+    return null;
+  }
+  
+  notes[noteIndex].title = newTitle;
+  
+  await saveNotes(notes);
+  
+  return notes[noteIndex];
+}
+
 module.exports = {
   addNote,
-  printNotes,
-  removeNote
+  getNotes,
+  removeNote,
+  updateNote
 }
